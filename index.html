@@ -1,20 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Simple Gemini App on Cloudflare Pages</title>
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Multimodal App on Cloudflare Pages</title>
+    <link rel="stylesheet" href="style.css">
 </head>
- <body>
-     <h1>Gemini API シンプルデモ</h1>
-     <textarea id="promptInput" rows="4" placeholder="ここにプロンプトを入力してください..."></textarea>
-     <button id="generateButton">生成する</button>
-     <h2>結果:</h2>
-     <div id="resultOutput">ここに結果が表示されます。</div>
+<body>
+    <h1>Gemini API マルチモーダルデモ</h1>
 
-     <script src="script.js"></script>
- </body>
- </html>
+    <label for="promptInput">プロンプト:</label><br>
+    <textarea id="promptInput" rows="4" placeholder="画像に関する指示や質問を入力..."></textarea><br>
+
+    <label for="imageInput">画像ファイル:</label><br>
+    <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp, image/heic, image/heif"><br> <!-- accept属性で対応形式を指定 -->
+
+    <button id="generateButton">生成する</button>
+
+    <h2>結果:</h2>
+    <div id="resultOutput">ここに結果が表示されます。</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
