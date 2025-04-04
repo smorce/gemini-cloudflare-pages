@@ -28,6 +28,10 @@
 2. 環境変数 `GEMINI_API_KEY` にGoogle AI StudioのAPIキー設定するだけ💯
 3. ビルド設定なしでそのまま公開〜マジ楽チン🎶
 
+## お試しデモサイト🌐
+デモサイトはこちら！実際に使ってみてね〜✨
+https://gemini-cloudflare-pages.pages.dev/
+
 ## ローカルで開発する時は〜🏠
 ```bash
 # 依存関係インストールしなきゃ〜
