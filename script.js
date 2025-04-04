@@ -6,10 +6,97 @@ const modelSelect = document.getElementById('modelSelect');
 const temperatureInput = document.getElementById('temperatureInput');
 const temperatureValue = document.getElementById('temperatureValue');
 const maxTokensInput = document.getElementById('maxTokensInput');
+const dropzone = document.getElementById('dropzone');
+const filePreview = document.getElementById('filePreview');
+const previewImage = document.getElementById('previewImage');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const removeFile = document.getElementById('removeFile');
 
 // Temperature値の表示を更新
 temperatureInput.addEventListener('input', () => {
     temperatureValue.textContent = temperatureInput.value;
+});
+
+// ドラッグ＆ドロップ関連のイベントリスナー
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// ドラッグ状態のスタイル変更
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => {
+        dropzone.classList.add('dragover');
+    }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => {
+        dropzone.classList.remove('dragover');
+    }, false);
+});
+
+// ドロップ時の処理
+dropzone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        imageInput.files = files;
+        handleFileSelect();
+    }
+}
+
+// 通常のファイル選択時の処理
+imageInput.addEventListener('change', handleFileSelect, false);
+
+function handleFileSelect() {
+    if (imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        
+        // ファイルタイプの検証
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+        if (!validTypes.includes(file.type)) {
+            alert('対応していないファイル形式です。JPG、PNG、WebP、HEIC、HEIFのいずれかをアップロードしてください。');
+            return;
+        }
+        
+        // プレビュー表示
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            filePreview.style.display = 'flex';
+            dropzone.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// ファイルサイズのフォーマット
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 削除ボタンのイベント
+removeFile.addEventListener('click', () => {
+    imageInput.value = '';
+    filePreview.style.display = 'none';
+    dropzone.style.display = 'block';
 });
 
 generateButton.addEventListener('click', async () => {

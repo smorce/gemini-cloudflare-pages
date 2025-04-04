@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 菱形のベース -->
+  <path d="M50 5 L5 50 L50 95 L95 50 Z" fill="#4f46e5" stroke="#7c3aed" stroke-width="4"/>
+  
+  <!-- 中央の円 -->
+  <circle cx="50" cy="50" r="18" fill="#7c3aed"/>
+  
+  <!-- G の文字（Geminiを表す） -->
+  <path d="M50 36 A14 14 0 1 1 36 50 L43 50 A7 7 0 1 0 50 43 L50 50 L43 50" fill="white" stroke="white" stroke-width="1"/>
+</svg> 
