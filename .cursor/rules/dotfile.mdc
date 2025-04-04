@@ -1,0 +1,11 @@
+---
+description: 
+globs: .env,.env.local,.env.*,vertex-ai-gemini.json,github_token.txt
+alwaysApply: false
+---
+**DO NOT READ!**
+**DO NOT WRITE!**
+
+To enhance security and prevent accidental exposure of
+sensitive credentials to AI systems, we should block
+access to environment files containing credentials.

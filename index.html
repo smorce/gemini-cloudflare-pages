@@ -9,6 +9,30 @@
 <body>
     <h1>Gemini API マルチモーダルデモ</h1>
 
+    <div class="settings-panel">
+        <div class="settings-section">
+            <label for="modelSelect">モデル選択:</label>
+            <select id="modelSelect">
+                <option value="gemini-2.5-pro-exp-03-25" selected>gemini-2.5-pro-exp-03-25 (デフォルト)</option>
+                <option value="gemini-2.0-flash-001">gemini-2.0-flash-001 (高速・低コスト)</option>
+                <option value="gemini-2.0-flash-lite-001">gemini-2.0-flash-lite-001 (最も高速・最低コスト)</option>
+            </select>
+        </div>
+
+        <div class="settings-section">
+            <label for="temperatureInput">Temperature:</label>
+            <input type="range" id="temperatureInput" min="0" max="2" step="0.1" value="1.0">
+            <span id="temperatureValue">1.0</span>
+            <div class="setting-description">生成の多様性 (0-2)</div>
+        </div>
+
+        <div class="settings-section">
+            <label for="maxTokensInput">最大出力トークン数:</label>
+            <input type="number" id="maxTokensInput" min="1" max="8192" value="4096">
+            <div class="setting-description">生成される最大テキスト量</div>
+        </div>
+    </div>
+
     <label for="promptInput">プロンプト:</label><br>
     <textarea id="promptInput" rows="4" placeholder="画像に関する指示や質問を入力..."></textarea><br>
 

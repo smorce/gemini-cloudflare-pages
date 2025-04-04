@@ -30,11 +30,21 @@ export async function onRequestPost(context) {
     let imageFile;
     let mimeType;
     let imageBase64;
+    let model;
+    let temperature;
+    let maxOutputTokens;
 
     try {
       const formData = await context.request.formData();
       prompt = formData.get('prompt'); // input name="prompt" の値
       imageFile = formData.get('image'); // input name="image" のファイル
+      
+      // UIから送信されたモデルとパラメータを取得
+      model = formData.get('model') || "gemini-2.5-pro-exp-03-25"; // デフォルト値
+      const tempValue = formData.get('temperature');
+      temperature = tempValue ? parseFloat(tempValue) : undefined; // 未設定の場合はundefined
+      const maxTokens = formData.get('maxOutputTokens');
+      maxOutputTokens = maxTokens ? parseInt(maxTokens) : undefined; // 未設定の場合はundefined
 
       if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
         throw new Error('プロンプトが指定されていないか、形式が正しくありません。');
@@ -53,6 +63,7 @@ export async function onRequestPost(context) {
       imageBase64 = arrayBufferToBase64(imageBuffer);
 
       console.log(`Received prompt: "${prompt}", image mimeType: ${mimeType}, size: ${imageFile.size} bytes`);
+      console.log(`Model: ${model}, Temperature: ${temperature}, MaxOutputTokens: ${maxOutputTokens}`);
 
     } catch (e) {
       console.error("Form data parsing error:", e);
@@ -65,18 +76,19 @@ export async function onRequestPost(context) {
     // --- 3. Gemini API クライアント初期化 & コンテンツ準備 ---
     const ai = new GoogleGenAI({ apiKey });
 
-    // マルチモーダル対応モデルを選択
-    // - gemini-1.5-flash-latest: 高速・低コスト・高性能 (推奨)
-    // - gemini-1.5-pro-latest: より高性能だが、やや遅く高コスト
-    // ※ "gemini-2.5-pro-exp-03-25" は実験的なモデルの可能性あり
-    const modelName = "gemini-1.5-flash-latest";
-    
     // 生成設定 (オプション)
     const generationConfig = {
-      // temperature: 1.0, // 生成の多様性 (0.0-1.0)
-      // maxOutputTokens: 8192, // 最大出力トークン数
       responseMimeType: "text/plain", // 応答形式をテキストに限定
     };
+    
+    // UIで設定された値がある場合のみ追加
+    if (temperature !== undefined) {
+      generationConfig.temperature = temperature;
+    }
+    
+    if (maxOutputTokens !== undefined) {
+      generationConfig.maxOutputTokens = maxOutputTokens;
+    }
 
     // 画像データをインラインデータとして準備
     const inlineData = {
@@ -85,10 +97,10 @@ export async function onRequestPost(context) {
     };
 
     // --- 4. Gemini API 呼び出し ---
-    console.log(`Calling Gemini (${modelName}) API...`);
+    console.log(`Calling Gemini (${model}) API...`);
     
     const response = await ai.models.generateContent({
-      model: modelName,
+      model: model,
       contents: [{
         role: "user",
         parts: [

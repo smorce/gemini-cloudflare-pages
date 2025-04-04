@@ -2,10 +2,22 @@ const promptInput = document.getElementById('promptInput');
 const imageInput = document.getElementById('imageInput'); // 追加
 const generateButton = document.getElementById('generateButton');
 const resultOutput = document.getElementById('resultOutput');
+const modelSelect = document.getElementById('modelSelect');
+const temperatureInput = document.getElementById('temperatureInput');
+const temperatureValue = document.getElementById('temperatureValue');
+const maxTokensInput = document.getElementById('maxTokensInput');
+
+// Temperature値の表示を更新
+temperatureInput.addEventListener('input', () => {
+    temperatureValue.textContent = temperatureInput.value;
+});
 
 generateButton.addEventListener('click', async () => {
     const prompt = promptInput.value.trim();
     const imageFile = imageInput.files[0]; // 選択されたファイルを取得
+    const selectedModel = modelSelect.value; // 選択されたモデル
+    const temperature = parseFloat(temperatureInput.value); // Temperature値
+    const maxOutputTokens = parseInt(maxTokensInput.value); // 最大トークン数
 
     if (!prompt) {
         resultOutput.textContent = 'プロンプトを入力してください。';
@@ -24,6 +36,9 @@ generateButton.addEventListener('click', async () => {
     const formData = new FormData();
     formData.append('prompt', prompt);
     formData.append('image', imageFile); // ファイルをそのまま追加
+    formData.append('model', selectedModel); // モデル選択
+    formData.append('temperature', temperature); // Temperature
+    formData.append('maxOutputTokens', maxOutputTokens); // 最大トークン数
 
     try {
         // Cloudflare Functionsのエンドポイントを呼び出す

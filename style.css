@@ -36,3 +36,54 @@ button:disabled {
     white-space: pre-wrap; /* 改行を保持 */
     min-height: 50px;
 }
+
+/* 新しい設定パネルのスタイル */
+.settings-panel {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.settings-section {
+    margin-bottom: 12px;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section label {
+    display: inline-block;
+    min-width: 140px;
+    margin-right: 10px;
+}
+
+.setting-description {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 2px;
+    margin-left: 140px;
+}
+
+#modelSelect {
+    padding: 5px;
+    width: 280px;
+}
+
+#temperatureInput {
+    width: 200px;
+    vertical-align: middle;
+}
+
+#temperatureValue {
+    display: inline-block;
+    width: 30px;
+    text-align: center;
+}
+
+#maxTokensInput {
+    width: 100px;
+    padding: 5px;
+}
