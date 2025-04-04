@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 // ArrayBufferをBase64文字列に変換するヘルパー関数
 // Cloudflare Workers環境では btoa が利用可能です
@@ -63,23 +63,14 @@ export async function onRequestPost(context) {
     }
 
     // --- 3. Gemini API クライアント初期化 & コンテンツ準備 ---
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const ai = new GoogleGenAI({ apiKey });
 
     // マルチモーダル対応モデルを選択
     // - gemini-1.5-flash-latest: 高速・低コスト・高性能 (推奨)
     // - gemini-1.5-pro-latest: より高性能だが、やや遅く高コスト
     // ※ "gemini-2.5-pro-exp-03-25" は実験的なモデルの可能性あり
     const modelName = "gemini-1.5-flash-latest";
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      // 必要に応じてセーフティ設定を調整 (デフォルトは比較的高め)
-      // safetySettings: [
-      //   { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-      //   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-      //   // ... 他のカテゴリ
-      // ],
-    });
-
+    
     // 生成設定 (オプション)
     const generationConfig = {
       // temperature: 1.0, // 生成の多様性 (0.0-1.0)
@@ -87,38 +78,36 @@ export async function onRequestPost(context) {
       responseMimeType: "text/plain", // 応答形式をテキストに限定
     };
 
-    // Gemini API に渡す入力データ (テキストと画像)
-    const parts = [
-      { text: prompt }, // 最初のパートはテキストプロンプト
-      {
-        inlineData: { // 次のパートは画像データ
-          mimeType: mimeType,
-          data: imageBase64
-        }
-      }
-    ];
+    // 画像データをインラインデータとして準備
+    const inlineData = {
+      mimeType: mimeType,
+      data: imageBase64
+    };
 
     // --- 4. Gemini API 呼び出し ---
     console.log(`Calling Gemini (${modelName}) API...`);
-    const result = await model.generateContent({
-        // @google/genai では contents 配列に role と parts を入れる形式が標準
-        contents: [{ role: "user", parts: parts }],
-        generationConfig,
-        // safetySettings: safetySettings, // 個別に設定する場合
+    
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: [{
+        role: "user",
+        parts: [
+          { text: prompt },
+          { inlineData: inlineData }
+        ]
+      }],
+      generationConfig
     });
 
     // --- 5. 結果を処理して返す ---
     // レスポンスや候補が存在するかチェック
-    if (!result || !result.response) {
-        console.error("Gemini API Error: Invalid response structure.", result);
-        // result オブジェクト全体をログに出力して詳細を確認する
+    if (!response) {
+        console.error("Gemini API Error: Invalid response structure.", response);
         return new Response(JSON.stringify({ error: 'Gemini APIから無効な応答構造が返されました。' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         });
     }
-
-    const response = result.response;
 
     // プロンプトフィードバックや候補の終了理由をチェック (セーフティなどによるブロック)
     if (response.promptFeedback?.blockReason) {
@@ -129,49 +118,28 @@ export async function onRequestPost(context) {
         });
     }
 
-    if (!response.candidates || response.candidates.length === 0) {
-      console.warn("Gemini API Warning: No candidates returned.");
-       return new Response(JSON.stringify({ error: 'Gemini APIから生成候補が返されませんでした。' }), {
+    // 生成されたテキストを取得
+    let generatedText = '';
+    try {
+      generatedText = response.text();
+    } catch (e) {
+      console.error("Error extracting text from response:", e);
+      
+      // 候補から直接テキストを取得する代替方法
+      if (response.candidates && response.candidates.length > 0) {
+        const candidate = response.candidates[0];
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+          generatedText = candidate.content.parts[0].text || '';
+        }
+      }
+      
+      if (!generatedText) {
+        return new Response(JSON.stringify({ error: 'Gemini APIからテキストを取得できませんでした。' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         });
+      }
     }
-
-    // 最初の候補を取得 (通常は1つ)
-    const candidate = response.candidates[0];
-
-    if (candidate.finishReason && candidate.finishReason !== "STOP" && candidate.finishReason !== "MAX_TOKENS") {
-       console.warn(`Generation finished with reason: ${candidate.finishReason}`);
-       // SAFETY や RECITATION など、問題のある終了理由の場合、エラーとして扱うか検討
-       if (candidate.finishReason === "SAFETY") {
-         return new Response(JSON.stringify({ error: '生成されたコンテンツが安全基準によりブロックされました。' }), {
-           status: 400,
-           headers: { 'Content-Type': 'application/json' },
-         });
-       }
-       // 他の理由 (e.g., RECITATION) も必要に応じてハンドリング
-    }
-
-    // 候補からテキストを取得 (responseMimeType: "text/plain" 指定時は通常 text() で取得)
-    // response.text() は候補が複数ある場合やエラー時に例外を投げる可能性があるので注意
-    // より安全なのは candidate から取得する方法
-    let generatedText = '';
-    if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-      // 通常、テキスト応答は最初の part に含まれる
-      generatedText = candidate.content.parts[0].text || '';
-    } else {
-      // 予期せぬ応答形式の場合
-      console.warn("Gemini API Warning: Could not extract text from candidate parts.", candidate);
-    }
-
-    // 代替: response.text() を使う場合 (エラーハンドリングを追加)
-    // try {
-    //   generatedText = response.text();
-    // } catch (e) {
-    //   console.error("Error extracting text with response.text():", e);
-    //   // candidate から取得を試みるなどフォールバック処理
-    // }
-
 
     console.log("Gemini response successfully processed.");
 
